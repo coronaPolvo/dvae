@@ -5,7 +5,7 @@ import os
 from vae_models import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=int, default=1)###1:mnist; 2:fmnist
+parser.add_argument('--dataset', type=int, default=1)  ###1:mnist; 2:fmnist
 parser.add_argument('--conv_mu', type=float, default=0.0)
 parser.add_argument('--conv_sigma', type=float, default=0.02)
 parser.add_argument('--bn_mu', type=float, default=1.0)

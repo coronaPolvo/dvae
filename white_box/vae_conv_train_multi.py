@@ -3,15 +3,15 @@ import argparse
 import torch.utils.data
 from torch import optim
 import os
-from dataset import *
-from vae_models import *
+from .dataset import *
+from .vae_models import *
 import numpy as np
 from torch.utils import data as data_
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False)
 parser.add_argument('--seed', type=int, default=1)
-parser.add_argument('--dataset', type=int, default=1)###1:mnist; 2:fmnist
+parser.add_argument('--dataset', type=int, default=1)  ###1:mnist; 2:fmnist
 parser.add_argument('--conv_mu', type=float, default=0.0)
 parser.add_argument('--conv_sigma', type=float, default=0.02)
 parser.add_argument('--bn_mu', type=float, default=1.0)
@@ -35,8 +35,10 @@ parser.add_argument('--resume', action='store_true', default=False)
 # parser.add_argument('--imagepath', type=str, default='/vol/bitbucket/wq1918/lisa-cnn-attack/cropped_training/')### 32*32 original image path
 # parser.add_argument('--advpath', type=str, default='/vol/bitbucket/wq1918/lisa-cnn-attack/attacked_cropped_training/')### 32*32 adversarial image path
 
-parser.add_argument('--imagepath', type=str, default='/home/floraqin/Documents/lisa-cnn-attack/cropped_training/')### 32*32 original image path
-parser.add_argument('--advpath', type=str, default='/home/floraqin/Documents/lisa-cnn-attack/attacked_cropped_training/')### 32*32 adversarial image path
+parser.add_argument('--imagepath', type=str,
+                    default='/home/floraqin/Documents/lisa-cnn-attack/cropped_training/')  ### 32*32 original image path
+parser.add_argument('--advpath', type=str,
+                    default='/home/floraqin/Documents/lisa-cnn-attack/attacked_cropped_training/')  ### 32*32 adversarial image path
 args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -45,10 +47,7 @@ device = torch.device("cuda" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 base_savedir = '../training_data/'
-# if args.dataset==1:
-#     base_savedir = 'mnist/'
-# elif args.dataset==2:
-#     base_savedir = 'fmnist/'
+
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -57,6 +56,7 @@ def weights_init(m):
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(args.bn_mu, args.bn_sigma)
         m.bias.data.fill_(0)
+
 
 if args.sigmoid:
     r_interval = (args.r_end - args.r_begin) / args.epochs
@@ -72,8 +72,8 @@ else:
 
 dataset = Dataset(args.imagepath, args.advpath)
 train_data_loader = data_.DataLoader(dataset,
-                              batch_size=args.batch_size,
-                              shuffle=True)
+                                     batch_size=args.batch_size,
+                                     shuffle=True)
 ### read adv and true
 # savedir = base_savedir
 # adv_x = np.load(savedir + 'adv_x.npy')
@@ -93,6 +93,8 @@ train_data_loader = data_.DataLoader(dataset,
 # train_data = torch.utils.data.TensorDataset(adv_x, xt)
 # train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
 import cv2
+
+
 def train(epoch, savedir):
     global best_loss
     model.train()
@@ -124,18 +126,18 @@ def train(epoch, savedir):
         recon_batch, mu, logvar = model(adv_batch)
 
         recon_image = recon_batch[0].squeeze(0)
-        recon_image = np.array(recon_image.detach().numpy()*255).transpose(1,2,0)
+        recon_image = np.array(recon_image.detach().numpy() * 255).transpose(1, 2, 0)
         recon_image = cv2.cvtColor(recon_image, cv2.COLOR_RGB2BGR)
 
         clean_image = clean_batch[0].squeeze(0)
-        clean_image = np.array(clean_image.numpy()*255).transpose(1,2,0)
+        clean_image = np.array(clean_image.numpy() * 255).transpose(1, 2, 0)
         clean_image = cv2.cvtColor(clean_image, cv2.COLOR_RGB2BGR)
         # print(recon_image)
-        if(batch_idx%10==0):
+        if (batch_idx % 10 == 0):
             # cv2.imshow("image: ", recon_image)
             # cv2.waitKey(0)
-            cv2.imwrite(savedir+'recon.png', recon_image)
-            cv2.imwrite(savedir+'clean.png', clean_image)
+            cv2.imwrite(savedir + 'recon.png', recon_image)
+            cv2.imwrite(savedir + 'clean.png', clean_image)
 
         # print("recon_image.shape: ",recon_image.shape)
         # cv2.imshow("image: ", recon_image)
@@ -146,7 +148,7 @@ def train(epoch, savedir):
         #     # print("recon_batch: ",(np.argwhere(recon_batch<0)).nelement())
         # if (np.argwhere(clean_batch<0)).nelement() != 0 or (np.argwhere(clean_batch>1)).nelement() != 0:
         #     print("clean_batch not in 0to1")
-            # print("clean_batch: ",(np.argwhere(clean_batch<-1)).nelement())
+        # print("clean_batch: ",(np.argwhere(clean_batch<-1)).nelement())
         loss, BCE, KLD = loss_lambda(recon_batch, clean_batch, mu, logvar, r)
         loss.backward()
         train_loss += loss.item()
@@ -171,12 +173,15 @@ def train(epoch, savedir):
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, loss_norm))
     return loss_ll, loss_B, loss_K
+
+
+
 savedir = base_savedir + 'vae_model_lambda/'
 model_dict = {18: VAE18()}
 vae_num = args.vae_model
 model = model_dict[vae_num].to(device)
 
-if os.path.exists(savedir +  'bestmodel.pth') and args.resume:
+if os.path.exists(savedir + 'bestmodel.pth') and args.resume:
     print("---------- resume training -------------------")
     model.load_state_dict(torch.load(savedir + 'bestmodel.pth'))
     model.to(device)
@@ -185,7 +190,6 @@ else:
     model.apply(weights_init)
 
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
-
 
 if not os.path.exists(savedir):
     os.makedirs(savedir)

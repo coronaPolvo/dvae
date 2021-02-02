@@ -19,11 +19,11 @@ def read_images(path, dtype=np.float32, color = True):
     else:
         # transpose (H, W, C) -> (C, H, W)
         return img.transpose((2, 0, 1))
+
 class BboxDataset:
     def __init__(self, data_dir, adv_data_dir, split='train'
                  ):
-        # data_dir = '../training_data/'
-        # id_list_file = os.path.join(data_dir, '{0}.txt'.format(split))
+
         id_list_file = glob.glob(os.path.join(data_dir, '*.png'))
         self.ids = id_list_file
         self.data_dir = data_dir

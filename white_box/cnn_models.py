@@ -347,7 +347,6 @@ def model_e(input_shape=(None, 28, 28, 1), nb_classes=10):
 
 
 def model_d(input_shape=(None, 28, 28, 1), nb_classes=10):
-
     layers = [Flatten(),
               Linear(200),
               ReLU(),

@@ -50,6 +50,7 @@ elif args.cnn_model == 3:
     model = model_c()
 elif args.cnn_model == 4:
     model = model_d()
+
 preds = model.get_probs(x)
 saver = tf.train.Saver()
 with tf.Session() as sess:
